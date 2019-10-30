@@ -257,8 +257,10 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			}
 			if len(expected) > 1 {
 				return nil, fmt.Errorf("expected one of %s at line %d", strings.Join(expected, ", "), token.Line)
-			} else {
+			} else if len(expected) > 0 {
 				return nil, fmt.Errorf("expected %s at line %d", expected[0], token.Line)
+			} else {
+				return nil, fmt.Errorf("no expected symbol")
 			}
 			/*for terminal, _ := range terminals {
 				if _, ok := gr.actionTable[tableKey{currentState, terminal}]; ok {
