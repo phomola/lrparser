@@ -44,6 +44,13 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 	return tokens2
 }
 
+func BuildOptSeq(root string, head, tail []string, builder func([]interface{}, []interface{}) interface{}) []*Rule {
+	var rules []*Rule
+	rules = append(rules, &Rule{root, head, func(r []interface{}) interface{} { return builder(r, nil) }})
+	rules = append(rules, &Rule{root, append(head, tail...), func(r []interface{}) interface{} { return builder(r[:len(head)], r[len(head):]) }})
+	return rules
+}
+
 func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightBracket string, builder func([]interface{}) interface{}) []*Rule {
 	var rules []*Rule
 	var symbols []string
