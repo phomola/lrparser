@@ -18,6 +18,10 @@ type Rule struct {
 	Conv func([]interface{}) interface{}
 }
 
+func(r*Rule)String()string{
+	return fmt.Sprintf("%s -> %v (%v)",r.Lhs,r.Rhs,r.Conv)
+}
+
 type Item struct {
 	Lhs    string
 	Rhs    []string
@@ -272,8 +276,12 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	}
 }
 
-func NewGrammar(rules []*Rule) *Grammar {
-	gr := &Grammar{Rules: rules}
+func NewGrammar(rules ...[]*Rule) *Grammar {
+	var allRules []*Rule
+	for _,r:=range rules{
+		allRules=append(allRules,r...)
+	}
+	gr := &Grammar{Rules: allRules}
 	gr.BuildItems()
 	return gr
 }
