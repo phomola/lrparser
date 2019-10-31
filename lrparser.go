@@ -12,14 +12,16 @@ import (
 	"github.com/phomola/textkit"
 )
 
+// Context-free rule with a builder function
 type Rule struct {
 	Lhs  string
 	Rhs  []string
 	Conv func([]interface{}) interface{}
 }
 
-func(r*Rule)String()string{
-	return fmt.Sprintf("%s -> %v (%v)",r.Lhs,r.Rhs,r.Conv)
+// String representation of a rule
+func (r *Rule) String() string {
+	return fmt.Sprintf("%s -> %v (%v)", r.Lhs, r.Rhs, r.Conv)
 }
 
 type Item struct {
@@ -278,8 +280,8 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 
 func NewGrammar(rules ...[]*Rule) *Grammar {
 	var allRules []*Rule
-	for _,r:=range rules{
-		allRules=append(allRules,r...)
+	for _, r := range rules {
+		allRules = append(allRules, r...)
 	}
 	gr := &Grammar{Rules: allRules}
 	gr.BuildItems()
