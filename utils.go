@@ -30,7 +30,7 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 							}
 							if j+1 == len(c) {
 								i += len(c) - 1
-								tokens2 = append(tokens2, &textkit.Token{textkit.Symbol, c, t.Line, t.Column})
+								tokens2 = append(tokens2, &textkit.Token{textkit.Symbol, c, t.Line, t.Column, ""})
 								goto cont
 							}
 						}
@@ -76,16 +76,16 @@ func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightB
 	return rules
 }
 
-type OperatorAssociativiy int
+type OperatorAssociativity int
 
 const (
-	LeftAssociative OperatorAssociativiy = iota
+	LeftAssociative OperatorAssociativity = iota
 	RightAssociative
 	NonAssociative
 )
 
 type Operator struct {
-	Associativity OperatorAssociativiy
+	Associativity OperatorAssociativity
 	Priority      int
 	Symbols       []string
 }
