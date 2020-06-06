@@ -258,6 +258,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 					if terminal == "_NUM" {
 						symbol = "number"
 					}
+					if terminal == "_EOF" {
+						symbol = "EOF"
+					}
 					expected = append(expected, symbol)
 				}
 			}
