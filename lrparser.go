@@ -1,7 +1,8 @@
-// Copyright 2018-2019 Petr Homola. All rights reserved.
+// Copyright 2018-2020 Petr Homola. All rights reserved.
 // Use of this source code is governed by the AGPL v3.0
 // that can be found in the LICENSE file.
 
+// An LR-parser.
 package lrparser
 
 import (
@@ -12,18 +13,19 @@ import (
 	"github.com/phomola/textkit"
 )
 
-// Context-free rule with a builder function
+// A context-free rule with a builder function.
 type Rule struct {
 	Lhs  string
 	Rhs  []string
 	Conv func([]interface{}) interface{}
 }
 
-// String representation of a rule
+// Returns a string representation of the rule.
 func (r *Rule) String() string {
 	return fmt.Sprintf("%s -> %v (%v)", r.Lhs, r.Rhs, r.Conv)
 }
 
+// An item of the parser.
 type Item struct {
 	Lhs    string
 	Rhs    []string
@@ -45,6 +47,7 @@ func (it *Item) String() string {
 	return s + ";"
 }
 
+// A state of the parser.
 type State struct {
 	Items []*Item
 }
@@ -78,7 +81,9 @@ type gotoAction struct {
 	state string
 }
 
+// A formal grammar.
 type Grammar struct {
+	// The rules of the grammar.
 	Rules        []*Rule
 	states       map[string]*State
 	initialState string
@@ -86,6 +91,7 @@ type Grammar struct {
 	gotoTable    map[tableKey]action
 }
 
+// Builds the items of the automaton.
 func (gr *Grammar) BuildItems() {
 	gr.states = make(map[string]*State)
 	gr.actionTable = make(map[tableKey]action)
@@ -186,6 +192,7 @@ func (gr *Grammar) closeItems(items []*Item) []*Item {
 	return items
 }
 
+// Parses a list of tokens.
 func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	terminals := make(map[string]struct{})
 	for key, _ := range gr.actionTable {
@@ -281,6 +288,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	}
 }
 
+// Returns a new grammar.
 func NewGrammar(rules ...[]*Rule) *Grammar {
 	var allRules []*Rule
 	for _, r := range rules {

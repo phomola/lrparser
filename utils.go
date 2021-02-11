@@ -1,4 +1,4 @@
-// Copyright 2018-2019 Petr Homola. All rights reserved.
+// Copyright 2018-2020 Petr Homola. All rights reserved.
 // Use of this source code is governed by the AGPL v3.0
 // that can be found in the LICENSE file.
 
