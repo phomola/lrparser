@@ -211,7 +211,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 		var symb string
 		switch token.Type {
 		case textkit.Symbol:
-			symb = "&" + token.Form
+			symb = "&" + string(token.Form)
 		case textkit.Number:
 			symb = "_NUM"
 		case textkit.String:
@@ -219,8 +219,8 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 		case textkit.EOF:
 			symb = "_EOF"
 		case textkit.Word:
-			if _, ok := keywords[token.Form]; ok {
-				symb = "&" + token.Form
+			if _, ok := keywords[string(token.Form)]; ok {
+				symb = "&" + string(token.Form)
 			} else {
 				symb = "_ID"
 			}

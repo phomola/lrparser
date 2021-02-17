@@ -20,17 +20,17 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 	for i := 0; i < len(tokens); i++ {
 		t := tokens[i]
 		if t.Type == textkit.Symbol {
-			if cs, ok := m[t.Form]; ok {
+			if cs, ok := m[string(t.Form)]; ok {
 				for _, c := range cs {
 					if len(c) <= len(tokens)-i {
 						for j := 1; j < len(c); j++ {
 							t2 := tokens[i+j]
-							if t2.Type != textkit.Symbol || t2.Form != c[j:j+1] {
+							if t2.Type != textkit.Symbol || string(t2.Form) != c[j:j+1] {
 								break
 							}
 							if j+1 == len(c) {
 								i += len(c) - 1
-								tokens2 = append(tokens2, &textkit.Token{textkit.Symbol, c, t.Line, t.Column, ""})
+								tokens2 = append(tokens2, &textkit.Token{textkit.Symbol, []rune(c), t.Line, t.Column, ""})
 								goto cont
 							}
 						}
