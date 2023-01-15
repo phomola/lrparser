@@ -22,7 +22,7 @@ type Rule struct {
 
 // Returns a string representation of the rule.
 func (r *Rule) String() string {
-	return fmt.Sprintf("%s -> %v (%v)", r.Lhs, r.Rhs, r.Conv)
+	return fmt.Sprintf("%s -> %v", r.Lhs, r.Rhs)
 }
 
 // An item of the parser.
@@ -218,6 +218,8 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			symb = "_STR"
 		case textkit.EOF:
 			symb = "_EOF"
+		case textkit.EOL:
+			symb = "_EOL"
 		case textkit.Word:
 			if _, ok := keywords[string(token.Form)]; ok {
 				symb = "&" + string(token.Form)
