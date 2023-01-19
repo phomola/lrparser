@@ -25,7 +25,7 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 					if len(c) <= len(tokens)-i {
 						for j := 1; j < len(c); j++ {
 							t2 := tokens[i+j]
-							if t2.Type != textkit.Symbol || string(t2.Form) != c[j:j+1] {
+							if (t2.Type != textkit.Symbol && t2.Type != textkit.Word) || string(t2.Form) != c[j:j+1] {
 								break
 							}
 							if j+1 == len(c) {

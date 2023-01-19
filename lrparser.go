@@ -270,6 +270,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 					if terminal == "_EOF" {
 						symbol = "EOF"
 					}
+					if terminal == "_EOL" {
+						symbol = "EOL"
+					}
 					expected = append(expected, symbol)
 				}
 			}
