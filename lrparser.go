@@ -2,7 +2,7 @@
 // Use of this source code is governed by the AGPL v3.0
 // that can be found in the LICENSE file.
 
-// An LR-parser.
+// Package lrparser is an LR-parser.
 package lrparser
 
 import (
@@ -13,41 +13,41 @@ import (
 	"github.com/phomola/textkit"
 )
 
-// A context-free rule with a builder function.
+// Rule is a context-free rule with a builder function.
 type Rule struct {
-	Lhs  string
-	Rhs  []string
+	LHS  string
+	RHS  []string
 	Conv func([]interface{}) interface{}
 }
 
-// Returns a string representation of the rule.
+// String returns a string representation of the rule.
 func (r *Rule) String() string {
-	return fmt.Sprintf("%s -> %v", r.Lhs, r.Rhs)
+	return fmt.Sprintf("%s -> %v", r.LHS, r.RHS)
 }
 
-// An item of the parser.
+// Item is an item of the parser.
 type Item struct {
-	Lhs    string
-	Rhs    []string
+	LHS    string
+	RHS    []string
 	DotPos int
 }
 
 func (it *Item) String() string {
-	s := it.Lhs + " ->"
-	for i, el := range it.Rhs {
+	s := it.LHS + " ->"
+	for i, el := range it.RHS {
 		s += " "
 		if it.DotPos == i {
 			s += "*"
 		}
 		s += el
 	}
-	if it.DotPos == len(it.Rhs) {
+	if it.DotPos == len(it.RHS) {
 		s += "*"
 	}
 	return s + ";"
 }
 
-// A state of the parser.
+// State is a state of the parser.
 type State struct {
 	Items []*Item
 }
@@ -87,7 +87,7 @@ type Located interface {
 	SetLocation(textkit.Location)
 }
 
-// A formal grammar.
+// Grammar is a formal grammar.
 type Grammar struct {
 	// The rules of the grammar.
 	Rules        []*Rule
@@ -97,14 +97,14 @@ type Grammar struct {
 	gotoTable    map[tableKey]action
 }
 
-// Builds the items of the automaton.
+// BuildItems builds the items of the automaton.
 func (gr *Grammar) BuildItems() {
 	gr.states = make(map[string]*State)
 	gr.actionTable = make(map[tableKey]action)
 	gr.gotoTable = make(map[tableKey]action)
 	rule := gr.Rules[0]
-	acceptingItem := &Item{rule.Lhs, rule.Rhs, len(rule.Rhs)}
-	items := gr.closeItems([]*Item{&Item{rule.Lhs, rule.Rhs, 0}})
+	acceptingItem := &Item{rule.LHS, rule.RHS, len(rule.RHS)}
+	items := gr.closeItems([]*Item{&Item{rule.LHS, rule.RHS, 0}})
 	state := &State{items}
 	gr.initialState = state.String()
 	states := []*State{state}
@@ -115,15 +115,15 @@ func (gr *Grammar) BuildItems() {
 			gr.states[state.String()] = state
 			tr := make(map[string]struct{})
 			for _, it := range state.Items {
-				if it.DotPos < len(it.Rhs) {
-					tr[it.Rhs[it.DotPos]] = struct{}{}
+				if it.DotPos < len(it.RHS) {
+					tr[it.RHS[it.DotPos]] = struct{}{}
 				}
 			}
 			for symb := range tr {
 				var items []*Item
 				for _, it := range state.Items {
-					if it.DotPos < len(it.Rhs) && it.Rhs[it.DotPos] == symb {
-						items = append(items, &Item{it.Lhs, it.Rhs, it.DotPos + 1})
+					if it.DotPos < len(it.RHS) && it.RHS[it.DotPos] == symb {
+						items = append(items, &Item{it.LHS, it.RHS, it.DotPos + 1})
 					}
 				}
 				items = gr.closeItems(items)
@@ -151,7 +151,7 @@ func (gr *Grammar) BuildItems() {
 	for _, state := range gr.states {
 		for i, rule := range gr.Rules {
 			if i > 0 {
-				it := &Item{rule.Lhs, rule.Rhs, len(rule.Rhs)}
+				it := &Item{rule.LHS, rule.RHS, len(rule.RHS)}
 				for _, it2 := range state.Items {
 					if it.String() == it2.String() {
 						for terminal := range terminals {
@@ -179,11 +179,11 @@ func (gr *Grammar) closeItems(items []*Item) []*Item {
 	for len(items) > 0 {
 		it := items[0]
 		items = items[1:]
-		if it.DotPos < len(it.Rhs) {
-			symb := it.Rhs[it.DotPos]
+		if it.DotPos < len(it.RHS) {
+			symb := it.RHS[it.DotPos]
 			for _, rule := range gr.Rules {
-				if rule.Lhs == symb {
-					it2 := &Item{rule.Lhs, rule.Rhs, 0}
+				if rule.LHS == symb {
+					it2 := &Item{rule.LHS, rule.RHS, 0}
 					if _, ok := m[it2.String()]; !ok {
 						m[it2.String()] = it2
 						items = append(items, it2)
@@ -198,7 +198,7 @@ func (gr *Grammar) closeItems(items []*Item) []*Item {
 	return items
 }
 
-// Parses a list of tokens.
+// Parse parses a list of tokens.
 func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	terminals := make(map[string]struct{})
 	for key := range gr.actionTable {
@@ -243,9 +243,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			//fmt.Println("SHIFT", currentState, "/", symb, "=>", action.state)
 		case *reduceAction:
 			rule := gr.Rules[action.rule]
-			results := resultStack[len(resultStack)-len(rule.Rhs):]
-			resultStack = resultStack[: len(resultStack)-len(rule.Rhs) : len(resultStack)-len(rule.Rhs)]
-			stateStack = stateStack[:len(stateStack)-len(rule.Rhs)]
+			results := resultStack[len(resultStack)-len(rule.RHS):]
+			resultStack = resultStack[: len(resultStack)-len(rule.RHS) : len(resultStack)-len(rule.RHS)]
+			stateStack = stateStack[:len(stateStack)-len(rule.RHS)]
 			r := rule.Conv(results)
 			if r, ok := r.(Located); ok {
 				var (
@@ -270,7 +270,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 				}
 			}
 			resultStack = append(resultStack, r)
-			if nextState, ok := gr.gotoTable[tableKey{stateStack[len(stateStack)-1], rule.Lhs}]; ok {
+			if nextState, ok := gr.gotoTable[tableKey{stateStack[len(stateStack)-1], rule.LHS}]; ok {
 				//fmt.Println("REDUCE", len(stateStack), len(results), currentState, "/", symb, "=>", nextState)
 				stateStack = append(stateStack, nextState.(*gotoAction).state)
 			} else {
@@ -322,7 +322,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	}
 }
 
-// Returns a new grammar.
+// NewGrammar returns a new grammar.
 func NewGrammar(rules ...[]*Rule) *Grammar {
 	var allRules []*Rule
 	for _, r := range rules {

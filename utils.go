@@ -11,6 +11,7 @@ import (
 	"github.com/phomola/textkit"
 )
 
+// CoalesceSymbols joins symbols together.
 func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Token {
 	m := make(map[string][]string)
 	for _, c := range clusters {
@@ -49,6 +50,7 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 	return tokens2
 }
 
+// BuildOptSeq builds an optional sequence.
 func BuildOptSeq(root string, head, tail []string, builder func([]interface{}, []interface{}) interface{}) []*Rule {
 	var rules []*Rule
 	rules = append(rules, &Rule{root, head, func(r []interface{}) interface{} { return builder(r, nil) }})
@@ -56,6 +58,7 @@ func BuildOptSeq(root string, head, tail []string, builder func([]interface{}, [
 	return rules
 }
 
+// BuildListRules builds list rules.
 func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightBracket string, builder func([]interface{}) interface{}) []*Rule {
 	var rules []*Rule
 	var symbols []string
@@ -81,20 +84,24 @@ func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightB
 	return rules
 }
 
+// OperatorAssociativity ...
 type OperatorAssociativity int
 
+// constants for OperatorAssociativity
 const (
 	LeftAssociative OperatorAssociativity = iota
 	RightAssociative
 	NonAssociative
 )
 
+// Operator ...
 type Operator struct {
 	Associativity OperatorAssociativity
 	Priority      int
 	Symbols       []string
 }
 
+// Name returns the operator's name.
 func (op Operator) Name() string {
 	var str string
 	for _, sym := range op.Symbols {
@@ -103,6 +110,7 @@ func (op Operator) Name() string {
 	return str
 }
 
+// BuildOperatorRules builds operator rules.
 func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, interface{}, interface{}) interface{}) []*Rule {
 	opMap := make(map[int][]Operator)
 	for _, op := range ops {
