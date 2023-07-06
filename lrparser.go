@@ -306,9 +306,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 				}
 			}
 			if len(expected) > 1 {
-				return nil, fmt.Errorf("expected one of %s at line %v", strings.Join(expected, ", "), token.Loc)
+				return nil, fmt.Errorf("expected one of %s at line %s", strings.Join(expected, ", "), token.Loc)
 			} else if len(expected) > 0 {
-				return nil, fmt.Errorf("expected %s at line %v", expected[0], token.Loc)
+				return nil, fmt.Errorf("expected %s at line %s", expected[0], token.Loc)
 			} else {
 				return nil, fmt.Errorf("no expected symbol")
 			}
