@@ -1,0 +1,31 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        go-version: [1.18.x, 1.20.x]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout out code
+        uses: actions/checkout@v3
+      - name: Linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          args: --timeout 5m
+      - name: Vet & test
+        run: |
+          # Vet & test
+          go vet -v ./...
+          go test -v ./...
