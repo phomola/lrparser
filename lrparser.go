@@ -81,6 +81,12 @@ type gotoAction struct {
 	state string
 }
 
+// Located specifies methods for AST node location.
+type Located interface {
+	Location() textkit.Location
+	SetLocation(textkit.Location)
+}
+
 // A formal grammar.
 type Grammar struct {
 	// The rules of the grammar.
@@ -113,7 +119,7 @@ func (gr *Grammar) BuildItems() {
 					tr[it.Rhs[it.DotPos]] = struct{}{}
 				}
 			}
-			for symb, _ := range tr {
+			for symb := range tr {
 				var items []*Item
 				for _, it := range state.Items {
 					if it.DotPos < len(it.Rhs) && it.Rhs[it.DotPos] == symb {
@@ -139,7 +145,7 @@ func (gr *Grammar) BuildItems() {
 		}
 	}
 	terminals := make(map[string]struct{})
-	for key, _ := range gr.actionTable {
+	for key := range gr.actionTable {
 		terminals[key.column] = struct{}{}
 	}
 	for _, state := range gr.states {
@@ -148,7 +154,7 @@ func (gr *Grammar) BuildItems() {
 				it := &Item{rule.Lhs, rule.Rhs, len(rule.Rhs)}
 				for _, it2 := range state.Items {
 					if it.String() == it2.String() {
-						for terminal, _ := range terminals {
+						for terminal := range terminals {
 							if prevAction, ok := gr.actionTable[tableKey{state.String(), terminal}]; ok {
 								if _, ok := prevAction.(*shiftAction); !ok {
 									panic(fmt.Sprintf("conflict: %s %T %s", terminal, prevAction, prevAction))
@@ -195,11 +201,11 @@ func (gr *Grammar) closeItems(items []*Item) []*Item {
 // Parses a list of tokens.
 func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	terminals := make(map[string]struct{})
-	for key, _ := range gr.actionTable {
+	for key := range gr.actionTable {
 		terminals[key.column] = struct{}{}
 	}
 	keywords := make(map[string]struct{})
-	for key, _ := range gr.actionTable {
+	for key := range gr.actionTable {
 		if key.column[0] == '&' {
 			keywords[key.column[1:]] = struct{}{}
 		}
@@ -240,7 +246,30 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			results := resultStack[len(resultStack)-len(rule.Rhs):]
 			resultStack = resultStack[: len(resultStack)-len(rule.Rhs) : len(resultStack)-len(rule.Rhs)]
 			stateStack = stateStack[:len(stateStack)-len(rule.Rhs)]
-			resultStack = append(resultStack, rule.Conv(results))
+			r := rule.Conv(results)
+			if r, ok := r.(Located); ok {
+				var (
+					loc textkit.Location
+					set bool
+				)
+				for _, el := range results {
+					switch x := el.(type) {
+					case *textkit.Token:
+						loc = x.Loc
+						set = true
+						goto setloc
+					case Located:
+						loc = x.Location()
+						set = true
+						goto setloc
+					}
+				}
+			setloc:
+				if set {
+					r.SetLocation(loc)
+				}
+			}
+			resultStack = append(resultStack, r)
 			if nextState, ok := gr.gotoTable[tableKey{stateStack[len(stateStack)-1], rule.Lhs}]; ok {
 				//fmt.Println("REDUCE", len(stateStack), len(results), currentState, "/", symb, "=>", nextState)
 				stateStack = append(stateStack, nextState.(*gotoAction).state)
@@ -252,7 +281,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			return resultStack[0], nil
 		default:
 			var expected []string
-			for terminal, _ := range terminals {
+			for terminal := range terminals {
 				if _, ok := gr.actionTable[tableKey{currentState, terminal}]; ok {
 					symbol := terminal
 					if terminal[0] == '&' {
@@ -277,9 +306,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 				}
 			}
 			if len(expected) > 1 {
-				return nil, fmt.Errorf("expected one of %s at line %d", strings.Join(expected, ", "), token.Line)
+				return nil, fmt.Errorf("expected one of %s at line %v", strings.Join(expected, ", "), token.Loc)
 			} else if len(expected) > 0 {
-				return nil, fmt.Errorf("expected %s at line %d", expected[0], token.Line)
+				return nil, fmt.Errorf("expected %s at line %v", expected[0], token.Loc)
 			} else {
 				return nil, fmt.Errorf("no expected symbol")
 			}
