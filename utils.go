@@ -30,7 +30,12 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 							}
 							if j+1 == len(c) {
 								i += len(c) - 1
-								tokens2 = append(tokens2, &textkit.Token{textkit.Symbol, []rune(c), t.Line, t.Column, ""})
+								tokens2 = append(tokens2, &textkit.Token{
+									Type: textkit.Symbol,
+									Form: []rune(c),
+									Loc:  t.Loc,
+									Tag:  "",
+								})
 								goto cont
 							}
 						}
@@ -104,7 +109,7 @@ func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, 
 		opMap[op.Priority] = append(opMap[op.Priority], op)
 	}
 	var prios []int
-	for p, _ := range opMap {
+	for p := range opMap {
 		prios = append(prios, p)
 	}
 	sort.Slice(prios, func(i, j int) bool { return i < j })
