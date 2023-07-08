@@ -11,3 +11,4 @@ lrparser.MustBuildRule(`MulExpr -> MulExpr "/" ConstExpr`, func(args []any) any 
 lrparser.MustBuildRule(`MulExpr -> ConstExpr`, func(args []any) any { return args[0] }),
 lrparser.MustBuildRule(`ConstExpr -> integer`, func(args []any) any { return args[0] }),
 ```
+See `cmd/example`
