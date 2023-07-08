@@ -8,7 +8,9 @@ package lrparser
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/phomola/textkit"
 )
@@ -23,6 +25,94 @@ type Rule struct {
 // String returns a string representation of the rule.
 func (r *Rule) String() string {
 	return fmt.Sprintf("%s -> %v", r.LHS, r.RHS)
+}
+
+var (
+	ruleTokeniser   *textkit.Tokeniser
+	ruleGrammar     *Grammar
+	ruleGrammarOnce sync.Once
+)
+
+type ruleDef struct {
+	LHS string
+	RHS []string
+}
+
+// MustBuildRule builds a grammar rule from a string. It panics on error.
+func MustBuildRule(def string, f func([]interface{}) interface{}) *Rule {
+	r, err := BuildRule(def, f)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+// BuildRule builds a grammar rule from a string.
+func BuildRule(def string, f func([]interface{}) interface{}) (*Rule, error) {
+	ruleGrammarOnce.Do(func() {
+		ruleTokeniser = &textkit.Tokeniser{
+			StringRune: '"',
+		}
+		ruleGrammar = &Grammar{Rules: []*Rule{
+			{LHS: "Init", RHS: []string{"Rule"}, Conv: func(args []interface{}) interface{} {
+				return args[0]
+			}},
+			{LHS: "Rule", RHS: []string{"_ID", "&->", "Symbols"}, Conv: func(args []interface{}) interface{} {
+				return &ruleDef{LHS: string(args[0].(*textkit.Token).Form), RHS: args[2].([]string)}
+			}},
+			{LHS: "Symbols", RHS: []string{"Symbols", "Symbol"}, Conv: func(args []interface{}) interface{} {
+				return append(args[0].([]string), args[1].(string))
+			}},
+			{LHS: "Symbols", RHS: []string{"Symbol"}, Conv: func(args []interface{}) interface{} {
+				return []string{args[0].(string)}
+			}},
+			{LHS: "Symbol", RHS: []string{"&string"}, Conv: func(args []interface{}) interface{} {
+				return "_STR"
+			}},
+			{LHS: "Symbol", RHS: []string{"&integer"}, Conv: func(args []interface{}) interface{} {
+				return "_NUM"
+			}},
+			{LHS: "Symbol", RHS: []string{"&ident"}, Conv: func(args []interface{}) interface{} {
+				return "_ID"
+			}},
+			{LHS: "Symbol", RHS: []string{"_ID"}, Conv: func(args []interface{}) interface{} {
+				return string(args[0].(*textkit.Token).Form)
+			}},
+			{LHS: "Symbol", RHS: []string{"_STR"}, Conv: func(args []interface{}) interface{} {
+				return "&" + string(args[0].(*textkit.Token).Form)
+			}},
+		}}
+		ruleGrammar.BuildItems()
+	})
+	tokens := ruleTokeniser.Tokenise(def, "grammar")
+	tokens = CoalesceSymbols(tokens, []string{"->"})
+	r, err := ruleGrammar.Parse(tokens)
+	if err != nil {
+		return nil, err
+	}
+	rule := r.(*ruleDef)
+	return &Rule{
+		LHS: rule.LHS,
+		RHS: rule.RHS,
+		Conv: func(args []interface{}) interface{} {
+			r := make([]interface{}, len(args))
+			for i, arg := range args {
+				switch x := arg.(type) {
+				case *textkit.Token:
+					switch x.Type {
+					case textkit.Word, textkit.Symbol, textkit.String:
+						r[i] = string(x.Form)
+					case textkit.Number:
+						n, _ := strconv.Atoi(string(x.Form))
+						r[i] = n
+					}
+				default:
+					r[i] = arg
+				}
+			}
+			return f(r)
+		},
+	}, nil
 }
 
 // Item is an item of the parser.
