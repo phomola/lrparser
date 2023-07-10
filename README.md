@@ -1,5 +1,7 @@
 # lrparser
 An LR parser
+
+Example:
 ```
 lrparser.MustBuildRule(`Init -> Expr`, func(args []any) any { return args[0] }),
 lrparser.MustBuildRule(`Expr -> "expr" AddExpr`, func(args []any) any { return args[1] }),
