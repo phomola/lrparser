@@ -1,5 +1,7 @@
 # lrparser
 An LR parser
+
+Example:
 ```
 gr := lrparser.NewGrammar(lrparser.MustBuildRules([]*lrparser.SynSem{
 	{Syn: `Init -> Expr`, Sem: func(args []any) any { return args[0] }},
@@ -13,4 +15,4 @@ gr := lrparser.NewGrammar(lrparser.MustBuildRules([]*lrparser.SynSem{
 	{Syn: `ConstExpr -> integer`, Sem: func(args []any) any { return args[0] }},
 }))
 ```
-See `cmd/example`
+See [`cmd/example`](https://github.com/phomola/lrparser/blob/master/cmd/example/main.go)
