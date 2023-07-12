@@ -154,3 +154,31 @@ func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, 
 	}
 	return rules
 }
+
+// SynSem is a syntactic rule with its semantic counterpart (a lambda function).
+type SynSem struct {
+	Syn string
+	Sem func([]any) any
+}
+
+// BuildRules creates rules from a slice of `SynSem`s.
+func BuildRules(list []*SynSem) ([]*Rule, error) {
+	rules := make([]*Rule, len(list))
+	for i, el := range list {
+		r, err := BuildRule(el.Syn, el.Sem)
+		if err != nil {
+			return nil, err
+		}
+		rules[i] = r
+	}
+	return rules, nil
+}
+
+// MustBuildRules creates rules from a slice of `SynSem`s. It panics on error.
+func MustBuildRules(list []*SynSem) []*Rule {
+	r, err := BuildRules(list)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
