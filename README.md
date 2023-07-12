@@ -1,5 +1,5 @@
 # lrparser
-An LR parser
+This is a library for creating LR parsers. It's similar to attribute grammars in that you can equip every rule with a lambda function that represents the semantic counterpart of the syntactic rule (for example, it can generate the value of an expression, as illustrated in the example below). 
 
 Example:
 ```
