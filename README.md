@@ -1,14 +1,16 @@
 # lrparser
 An LR parser
 ```
-lrparser.MustBuildRule(`Init -> Expr`, func(args []any) any { return args[0] }),
-lrparser.MustBuildRule(`Expr -> "expr" AddExpr`, func(args []any) any { return args[1] }),
-lrparser.MustBuildRule(`AddExpr -> AddExpr "+" MulExpr`, func(args []any) any { return args[0].(int) + args[2].(int) }),
-lrparser.MustBuildRule(`AddExpr -> AddExpr "-" MulExpr`, func(args []any) any { return args[0].(int) - args[2].(int) }),
-lrparser.MustBuildRule(`AddExpr -> MulExpr`, func(args []any) any { return args[0] }),
-lrparser.MustBuildRule(`MulExpr -> MulExpr "*" ConstExpr`, func(args []any) any { return args[0].(int) * args[2].(int) }),
-lrparser.MustBuildRule(`MulExpr -> MulExpr "/" ConstExpr`, func(args []any) any { return args[0].(int) / args[2].(int) }),
-lrparser.MustBuildRule(`MulExpr -> ConstExpr`, func(args []any) any { return args[0] }),
-lrparser.MustBuildRule(`ConstExpr -> integer`, func(args []any) any { return args[0] }),
+gr := lrparser.NewGrammar(lrparser.MustBuildRules([]*lrparser.SynSem{
+	{Syn: `Init -> Expr`, Sem: func(args []any) any { return args[0] }},
+	{Syn: `Expr -> "expr" AddExpr`, Sem: func(args []any) any { return args[1] }},
+	{Syn: `AddExpr -> AddExpr "+" MulExpr`, Sem: func(args []any) any { return args[0].(int) + args[2].(int) }},
+	{Syn: `AddExpr -> AddExpr "-" MulExpr`, Sem: func(args []any) any { return args[0].(int) - args[2].(int) }},
+	{Syn: `AddExpr -> MulExpr`, Sem: func(args []any) any { return args[0] }},
+	{Syn: `MulExpr -> MulExpr "*" ConstExpr`, Sem: func(args []any) any { return args[0].(int) * args[2].(int) }},
+	{Syn: `MulExpr -> MulExpr "/" ConstExpr`, Sem: func(args []any) any { return args[0].(int) / args[2].(int) }},
+	{Syn: `MulExpr -> ConstExpr`, Sem: func(args []any) any { return args[0] }},
+	{Syn: `ConstExpr -> integer`, Sem: func(args []any) any { return args[0] }},
+}))
 ```
 See `cmd/example`
