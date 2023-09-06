@@ -75,6 +75,12 @@ func BuildRule(def string, f func([]interface{}) interface{}) (*Rule, error) {
 			{LHS: "Symbol", RHS: []string{"&ident"}, Conv: func(args []interface{}) interface{} {
 				return "_ID"
 			}},
+			{LHS: "Symbol", RHS: []string{"&eol"}, Conv: func(args []interface{}) interface{} {
+				return "_EOL"
+			}},
+			{LHS: "Symbol", RHS: []string{"&end"}, Conv: func(args []interface{}) interface{} {
+				return "_END"
+			}},
 			{LHS: "Symbol", RHS: []string{"_ID"}, Conv: func(args []interface{}) interface{} {
 				return string(args[0].(*textkit.Token).Form)
 			}},
@@ -316,6 +322,8 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			symb = "_EOF"
 		case textkit.EOL:
 			symb = "_EOL"
+		case textkit.EndIndent:
+			symb = "_END"
 		case textkit.Word:
 			if _, ok := keywords[string(token.Form)]; ok {
 				symb = "&" + string(token.Form)
@@ -391,6 +399,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 					}
 					if terminal == "_EOL" {
 						symbol = "EOL"
+					}
+					if terminal == "_END" {
+						symbol = "END"
 					}
 					expected = append(expected, symbol)
 				}
