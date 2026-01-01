@@ -407,11 +407,11 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 				}
 			}
 			if len(expected) > 1 {
-				return nil, fmt.Errorf("expected one of %s at line %s", strings.Join(expected, ", "), token.Loc)
+				return nil, &ParseError{Message: fmt.Sprintf("expected one of %s", strings.Join(expected, ", ")), Loc: &token.Loc}
 			} else if len(expected) > 0 {
-				return nil, fmt.Errorf("expected %s at line %s", expected[0], token.Loc)
+				return nil, &ParseError{Message: fmt.Sprintf("expected %s", expected[0]), Loc: &token.Loc}
 			} else {
-				return nil, fmt.Errorf("no expected symbol")
+				return nil, &ParseError{Message: "no expected symbol"}
 			}
 			/*for terminal, _ := range terminals {
 				if _, ok := gr.actionTable[tableKey{currentState, terminal}]; ok {
@@ -421,6 +421,19 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			return nil, fmt.Errorf("expected '%s' at line %d", strings.Join(expected, "|"), token.Line)*/
 		}
 	}
+}
+
+// ParseError is a parse error.
+type ParseError struct {
+	Message string
+	Loc     *textkit.Location
+}
+
+func (err *ParseError) Error() string {
+	if err.Loc != nil {
+		return err.Message + " at " + err.Loc.String()
+	}
+	return err.Message
 }
 
 // NewGrammar returns a new grammar.
