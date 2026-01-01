@@ -423,7 +423,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 	}
 }
 
-// ParseError is a parser error.
+// ParseError is a parse error.
 type ParseError struct {
 	Message string
 	Loc     *textkit.Location
@@ -432,9 +432,8 @@ type ParseError struct {
 func (err *ParseError) Error() string {
 	if err.Loc != nil {
 		return err.Message + " at " + err.Loc.String()
-	} else {
-		return err.Message
 	}
+	return err.Message
 }
 
 // NewGrammar returns a new grammar.
