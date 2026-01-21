@@ -179,8 +179,8 @@ type gotoAction struct {
 
 // Located specifies methods for AST node location.
 type Located interface {
-	Location() textkit.Location
-	SetLocation(textkit.Location)
+	Location() *textkit.Location
+	SetLocation(*textkit.Location)
 }
 
 // Grammar is a formal grammar.
@@ -346,24 +346,19 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			stateStack = stateStack[:len(stateStack)-len(rule.RHS)]
 			r := rule.Conv(results)
 			if r, ok := r.(Located); ok {
-				var (
-					loc textkit.Location
-					set bool
-				)
+				var loc *textkit.Location
 				for _, el := range results {
 					switch x := el.(type) {
 					case *textkit.Token:
 						loc = x.Loc
-						set = true
 						goto setloc
 					case Located:
 						loc = x.Location()
-						set = true
 						goto setloc
 					}
 				}
 			setloc:
-				if set {
+				if loc != nil {
 					r.SetLocation(loc)
 				}
 			}
@@ -407,9 +402,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 				}
 			}
 			if len(expected) > 1 {
-				return nil, &ParseError{Message: fmt.Sprintf("expected one of %s", strings.Join(expected, ", ")), Loc: &token.Loc}
+				return nil, &ParseError{Message: fmt.Sprintf("expected one of %s", strings.Join(expected, ", ")), Loc: token.Loc}
 			} else if len(expected) > 0 {
-				return nil, &ParseError{Message: fmt.Sprintf("expected %s", expected[0]), Loc: &token.Loc}
+				return nil, &ParseError{Message: fmt.Sprintf("expected %s", expected[0]), Loc: token.Loc}
 			} else {
 				return nil, &ParseError{Message: "no expected symbol"}
 			}
