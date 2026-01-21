@@ -346,24 +346,19 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 			stateStack = stateStack[:len(stateStack)-len(rule.RHS)]
 			r := rule.Conv(results)
 			if r, ok := r.(Located); ok {
-				var (
-					loc *textkit.Location
-					set bool
-				)
+				var loc *textkit.Location
 				for _, el := range results {
 					switch x := el.(type) {
 					case *textkit.Token:
 						loc = x.Loc
-						set = true
 						goto setloc
 					case Located:
 						loc = x.Location()
-						set = true
 						goto setloc
 					}
 				}
 			setloc:
-				if set {
+				if loc != nil {
 					r.SetLocation(loc)
 				}
 			}
