@@ -7,6 +7,7 @@ package lrparser
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/phomola/textkit"
 )
@@ -51,15 +52,15 @@ func CoalesceSymbols(tokens []*textkit.Token, clusters []string) []*textkit.Toke
 }
 
 // BuildOptSeq builds an optional sequence.
-func BuildOptSeq(root string, head, tail []string, builder func([]interface{}, []interface{}) interface{}) []*Rule {
+func BuildOptSeq(root string, head, tail []string, builder func([]any, []any) any) []*Rule {
 	var rules []*Rule
-	rules = append(rules, &Rule{root, head, func(r []interface{}) interface{} { return builder(r, nil) }})
-	rules = append(rules, &Rule{root, append(head, tail...), func(r []interface{}) interface{} { return builder(r[:len(head)], r[len(head):]) }})
+	rules = append(rules, &Rule{root, head, func(r []any) any { return builder(r, nil) }})
+	rules = append(rules, &Rule{root, append(head, tail...), func(r []any) any { return builder(r[:len(head)], r[len(head):]) }})
 	return rules
 }
 
 // BuildListRules builds list rules.
-func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightBracket string, builder func([]interface{}) interface{}) []*Rule {
+func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightBracket string, builder func([]any) any) []*Rule {
 	var rules []*Rule
 	var symbols []string
 	index := 0
@@ -71,15 +72,15 @@ func BuildListRules(root, leaf string, canBeEmpty bool, leftBracket, sep, rightB
 	if rightBracket != "" {
 		symbols = append(symbols, rightBracket)
 	}
-	rules = append(rules, &Rule{root, symbols, func(r []interface{}) interface{} { return builder(r[index].([]interface{})) }})
+	rules = append(rules, &Rule{root, symbols, func(r []any) any { return builder(r[index].([]any)) }})
 	if canBeEmpty {
-		rules = append(rules, &Rule{root, []string{leftBracket, rightBracket}, func(r []interface{}) interface{} { return builder(nil) }})
+		rules = append(rules, &Rule{root, []string{leftBracket, rightBracket}, func(r []any) any { return builder(nil) }})
 	}
-	rules = append(rules, &Rule{root + "Els", []string{leaf}, func(r []interface{}) interface{} { return []interface{}{r[0]} }})
+	rules = append(rules, &Rule{root + "Els", []string{leaf}, func(r []any) any { return []any{r[0]} }})
 	if sep != "" {
-		rules = append(rules, &Rule{root + "Els", []string{root + "Els", sep, leaf}, func(r []interface{}) interface{} { return append(r[0].([]interface{}), r[2]) }})
+		rules = append(rules, &Rule{root + "Els", []string{root + "Els", sep, leaf}, func(r []any) any { return append(r[0].([]any), r[2]) }})
 	} else {
-		rules = append(rules, &Rule{root + "Els", []string{root + "Els", leaf}, func(r []interface{}) interface{} { return append(r[0].([]interface{}), r[1]) }})
+		rules = append(rules, &Rule{root + "Els", []string{root + "Els", leaf}, func(r []any) any { return append(r[0].([]any), r[1]) }})
 	}
 	return rules
 }
@@ -103,15 +104,15 @@ type Operator struct {
 
 // Name returns the operator's name.
 func (op Operator) Name() string {
-	var str string
+	var str strings.Builder
 	for _, sym := range op.Symbols {
-		str += sym[1:]
+		str.WriteString(sym[1:])
 	}
-	return str
+	return str.String()
 }
 
 // BuildOperatorRules builds operator rules.
-func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, interface{}, interface{}) interface{}) []*Rule {
+func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, any, any) any) []*Rule {
 	opMap := make(map[int][]Operator)
 	for _, op := range ops {
 		opMap[op.Priority] = append(opMap[op.Priority], op)
@@ -121,7 +122,7 @@ func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, 
 		prios = append(prios, p)
 	}
 	sort.Slice(prios, func(i, j int) bool { return i < j })
-	rules := []*Rule{&Rule{root, []string{fmt.Sprintf("%sOp%d", root, prios[0])}, func(r []interface{}) interface{} { return r[0] }}}
+	rules := []*Rule{&Rule{root, []string{fmt.Sprintf("%sOp%d", root, prios[0])}, func(r []any) any { return r[0] }}}
 	for i, prio := range prios {
 		sym1 := fmt.Sprintf("%sOp%d", root, prio)
 		var sym2 string
@@ -144,10 +145,10 @@ func BuildOperatorRules(root, leaf string, ops []Operator, builder func(string, 
 				symbols = append(symbols, sym2)
 			}
 			rules2 := []*Rule{
-				&Rule{sym1, symbols, func(r []interface{}) interface{} {
+				&Rule{sym1, symbols, func(r []any) any {
 					return builder(op.Name(), r[0], r[len(r)-1])
 				}},
-				&Rule{sym1, []string{sym2}, func(r []interface{}) interface{} { return r[0] }},
+				&Rule{sym1, []string{sym2}, func(r []any) any { return r[0] }},
 			}
 			rules = append(rules, rules2...)
 		}
