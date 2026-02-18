@@ -19,7 +19,7 @@ import (
 type Rule struct {
 	LHS  string
 	RHS  []string
-	Conv func([]interface{}) interface{}
+	Conv func([]any) any
 }
 
 // String returns a string representation of the rule.
@@ -39,7 +39,7 @@ type ruleDef struct {
 }
 
 // MustBuildRule builds a grammar rule from a string. It panics on error.
-func MustBuildRule(def string, f func([]interface{}) interface{}) *Rule {
+func MustBuildRule(def string, f func([]any) any) *Rule {
 	r, err := BuildRule(def, f)
 	if err != nil {
 		panic(err)
@@ -48,43 +48,43 @@ func MustBuildRule(def string, f func([]interface{}) interface{}) *Rule {
 }
 
 // BuildRule builds a grammar rule from a string.
-func BuildRule(def string, f func([]interface{}) interface{}) (*Rule, error) {
+func BuildRule(def string, f func([]any) any) (*Rule, error) {
 	ruleGrammarOnce.Do(func() {
 		ruleTokeniser = &textkit.Tokeniser{
 			StringRune: '"',
 		}
 		ruleGrammar = &Grammar{Rules: []*Rule{
-			{LHS: "Init", RHS: []string{"Rule"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Init", RHS: []string{"Rule"}, Conv: func(args []any) any {
 				return args[0]
 			}},
-			{LHS: "Rule", RHS: []string{"_ID", "&->", "Symbols"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Rule", RHS: []string{"_ID", "&->", "Symbols"}, Conv: func(args []any) any {
 				return &ruleDef{LHS: string(args[0].(*textkit.Token).Form), RHS: args[2].([]string)}
 			}},
-			{LHS: "Symbols", RHS: []string{"Symbols", "Symbol"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbols", RHS: []string{"Symbols", "Symbol"}, Conv: func(args []any) any {
 				return append(args[0].([]string), args[1].(string))
 			}},
-			{LHS: "Symbols", RHS: []string{"Symbol"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbols", RHS: []string{"Symbol"}, Conv: func(args []any) any {
 				return []string{args[0].(string)}
 			}},
-			{LHS: "Symbol", RHS: []string{"&string"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"&string"}, Conv: func(args []any) any {
 				return "_STR"
 			}},
-			{LHS: "Symbol", RHS: []string{"&integer"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"&integer"}, Conv: func(args []any) any {
 				return "_NUM"
 			}},
-			{LHS: "Symbol", RHS: []string{"&ident"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"&ident"}, Conv: func(args []any) any {
 				return "_ID"
 			}},
-			{LHS: "Symbol", RHS: []string{"&eol"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"&eol"}, Conv: func(args []any) any {
 				return "_EOL"
 			}},
-			{LHS: "Symbol", RHS: []string{"&end"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"&end"}, Conv: func(args []any) any {
 				return "_END"
 			}},
-			{LHS: "Symbol", RHS: []string{"_ID"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"_ID"}, Conv: func(args []any) any {
 				return string(args[0].(*textkit.Token).Form)
 			}},
-			{LHS: "Symbol", RHS: []string{"_STR"}, Conv: func(args []interface{}) interface{} {
+			{LHS: "Symbol", RHS: []string{"_STR"}, Conv: func(args []any) any {
 				return "&" + string(args[0].(*textkit.Token).Form)
 			}},
 		}}
@@ -100,8 +100,8 @@ func BuildRule(def string, f func([]interface{}) interface{}) (*Rule, error) {
 	return &Rule{
 		LHS: rule.LHS,
 		RHS: rule.RHS,
-		Conv: func(args []interface{}) interface{} {
-			r := make([]interface{}, len(args))
+		Conv: func(args []any) any {
+			r := make([]any, len(args))
 			for i, arg := range args {
 				switch x := arg.(type) {
 				case *textkit.Token:
@@ -129,18 +129,19 @@ type Item struct {
 }
 
 func (it *Item) String() string {
-	s := it.LHS + " ->"
+	var s strings.Builder
+	s.WriteString(it.LHS + " ->")
 	for i, el := range it.RHS {
-		s += " "
+		s.WriteString(" ")
 		if it.DotPos == i {
-			s += "*"
+			s.WriteString("*")
 		}
-		s += el
+		s.WriteString(el)
 	}
 	if it.DotPos == len(it.RHS) {
-		s += "*"
+		s.WriteString("*")
 	}
-	return s + ";"
+	return s.String() + ";"
 }
 
 // State is a state of the parser.
@@ -161,7 +162,7 @@ type tableKey struct {
 	row, column string
 }
 
-type action interface{}
+type action any
 
 type shiftAction struct {
 	state string
@@ -295,7 +296,7 @@ func (gr *Grammar) closeItems(items []*Item) []*Item {
 }
 
 // Parse parses a list of tokens.
-func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
+func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 	terminals := make(map[string]struct{})
 	for key := range gr.actionTable {
 		terminals[key.column] = struct{}{}
@@ -307,7 +308,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (interface{}, error) {
 		}
 	}
 	stateStack := []string{gr.initialState}
-	resultStack := []interface{}{}
+	resultStack := []any{}
 	for {
 		token := tokens[0]
 		var symb string
