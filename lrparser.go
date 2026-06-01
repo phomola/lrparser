@@ -187,11 +187,12 @@ type Located interface {
 // Grammar is a formal grammar.
 type Grammar struct {
 	// The rules of the grammar.
-	Rules        []*Rule
-	states       map[string]*State
-	initialState string
-	actionTable  map[tableKey]action
-	gotoTable    map[tableKey]action
+	Rules             []*Rule
+	ErrorOnNonlocated bool
+	states            map[string]*State
+	initialState      string
+	actionTable       map[tableKey]action
+	gotoTable         map[tableKey]action
 }
 
 // BuildItems builds the items of the automaton.
@@ -346,7 +347,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 			resultStack = resultStack[: len(resultStack)-len(rule.RHS) : len(resultStack)-len(rule.RHS)]
 			stateStack = stateStack[:len(stateStack)-len(rule.RHS)]
 			r := rule.Conv(results)
-			if r, ok := r.(Located); ok {
+			if r2, ok := r.(Located); ok {
 				var loc *textkit.Location
 				for _, el := range results {
 					switch x := el.(type) {
@@ -360,7 +361,11 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 				}
 			setloc:
 				if loc != nil {
-					r.SetLocation(loc)
+					r2.SetLocation(loc)
+				}
+			} else {
+				if gr.ErrorOnNonlocated {
+					return nil, fmt.Errorf("'%T' doesn't conform to lrparser.Located", r)
 				}
 			}
 			resultStack = append(resultStack, r)
