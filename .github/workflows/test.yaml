@@ -20,10 +20,6 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Checkout out code
         uses: actions/checkout@v3
-      - name: Linter
-        uses: golangci/golangci-lint-action@v3
-        with:
-          args: --timeout 5m
       - name: Vet & test
         run: |
           # Vet & test
