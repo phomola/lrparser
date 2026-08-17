@@ -1,6 +1,4 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
-github.com/phomola/textkit v0.1.8 h1:Cl+ONYpdCDAm+RlZzCygrWoXi/SXVOMHMQM+ndVOsoo=
-github.com/phomola/textkit v0.1.8/go.mod h1:FqA3yGoeX0qVfWGTRvS6k4inILIFlUJ1mryZIblOxVc=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/phomola/textkit v0.1.9 h1:u0E+tWdLTyigF5ej2UUJ5/sOUaxipf4trkQC8fqAWP0=
 github.com/phomola/textkit v0.1.9/go.mod h1:nnsdZXEE4m4Dg0G96t3nWCBXihK2fHoWq9iQDv9PlW0=
