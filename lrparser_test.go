@@ -20,7 +20,6 @@ func TestParsing(t *testing.T) {
 	}
 	grammar := NewGrammar(rules)
 	grammar.BuildItems()
-
 	var tok textkit.Tokeniser
 	tokens := tok.Tokenise("abcd 1234", "")
 	r, err := grammar.Parse(tokens)
