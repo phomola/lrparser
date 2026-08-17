@@ -35,11 +35,6 @@ func (r *Rule) rhsAsList() list.List[string] {
 	return r.rhsList
 }
 
-// NewRule creates a new rule.
-func NewRule(lhs string, rhs []string, conv func([]any) any) *Rule {
-	return &Rule{LHS: lhs, RHS: rhs, Conv: conv}
-}
-
 // String returns a string representation of the rule.
 func (r *Rule) String() string {
 	return fmt.Sprintf("%s -> %v", r.LHS, r.RHS)
@@ -150,7 +145,7 @@ type Item struct {
 }
 
 // Less compares the two items.
-func (it *Item) Less(it2 *Item) bool {
+func (it Item) Less(it2 Item) bool {
 	if it.LHS < it2.LHS {
 		return true
 	}
@@ -258,7 +253,7 @@ func (gr *Grammar) BuildItems() {
 	rhsList := rule.rhsAsList()
 	acceptingItem := Item{rule.LHS, rhsList, len(rule.RHS)}
 	items := gr.closeItems([]Item{{rule.LHS, rhsList, 0}})
-	state := &State{list.FromSlice(items).Sorted(func(x, y Item) bool { return x.Less(&y) })}
+	state := &State{list.FromSlice(items).Sorted(Item.Less)}
 	gr.initialState = state.Items
 	states := []*State{state}
 	for len(states) > 0 {
@@ -280,7 +275,7 @@ func (gr *Grammar) BuildItems() {
 					}
 				}
 				items = gr.closeItems(items)
-				state2 := &State{list.FromSlice(items).Sorted(func(x, y Item) bool { return x.Less(&y) })}
+				state2 := &State{list.FromSlice(items).Sorted(Item.Less)}
 				if symb[0] == '_' || symb[0] == '&' {
 					gr.actionTable[tableKey{state.Items, symb}] = &shiftAction{state2.Items}
 				} else {
