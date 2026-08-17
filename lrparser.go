@@ -81,6 +81,9 @@ func BuildRule(def string, f func([]any) any) (*Rule, error) {
 			{LHS: "Symbol", RHS: []string{"&end"}, Conv: func(args []any) any {
 				return "_END"
 			}},
+			{LHS: "Symbol", RHS: []string{"&comment"}, Conv: func(args []any) any {
+				return "_COMM"
+			}},
 			{LHS: "Symbol", RHS: []string{"_ID"}, Conv: func(args []any) any {
 				return string(args[0].(*textkit.Token).Form)
 			}},
@@ -326,6 +329,8 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 			symb = "_EOL"
 		case textkit.EndIndent:
 			symb = "_END"
+		case textkit.Comment:
+			symb = "_COMM"
 		case textkit.Word:
 			if _, ok := keywords[string(token.Form)]; ok {
 				symb = "&" + string(token.Form)
@@ -403,6 +408,9 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 					}
 					if terminal == "_END" {
 						symbol = "END"
+					}
+					if terminal == "_COMM" {
+						symbol = "comment"
 					}
 					expected = append(expected, symbol)
 				}
