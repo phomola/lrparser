@@ -35,11 +35,6 @@ func (r *Rule) rhsAsList() list.List[string] {
 	return r.rhsList
 }
 
-// NewRule creates a new rule.
-func NewRule(lhs string, rhs []string, conv func([]any) any) *Rule {
-	return &Rule{LHS: lhs, RHS: rhs, Conv: conv}
-}
-
 // String returns a string representation of the rule.
 func (r *Rule) String() string {
 	return fmt.Sprintf("%s -> %v", r.LHS, r.RHS)
