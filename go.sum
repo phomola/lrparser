@@ -1,7 +1,9 @@
-github.com/phomola/gomisc v0.1.15 h1:AhY11v9FiHYhtOFCCHgMaswd40z3js60H0GXlcel/Rs=
-github.com/phomola/gomisc v0.1.15/go.mod h1:uoBEq4AzYq/0+6aGpogZjGMQ5KbN+jmgaoGfUD35bl4=
-github.com/phomola/textkit v0.1.10 h1:Br03HDQ38k8nnwz3Mgo8Q34ERXS2s5c5yzs+ddJL3Dw=
-github.com/phomola/textkit v0.1.10/go.mod h1:TBo6aNNLo0VPYGkuo0gleI0YbzCDkYO5/04WXMHYObg=
+github.com/fealsamh/go-utils v0.2.0 h1:rAFBRDsYZH4Zq5rPW+QNLUtBA4P1Y7X0NRADMlWeQcM=
+github.com/fealsamh/go-utils v0.2.0/go.mod h1:Qn1p9iJWFucpU2cSwD6CNGv5y42EIcqqZIBMIGtzbMU=
+github.com/phomola/gomisc v0.1.16 h1:gAEEhRYTQyx0BdBJHdM5PrMTiW6PY7jwCIvy/MLgztA=
+github.com/phomola/gomisc v0.1.16/go.mod h1:FP7Z4/byxoYbe2QF9Vob2NuIfwYipmQA/sDnqsbNR40=
+github.com/phomola/textkit v0.1.11 h1:7ywXbFdHozs64LOH0uOX/4awWilMUvt5/wfI7Jx2Thk=
+github.com/phomola/textkit v0.1.11/go.mod h1:Ieei25eR9DMeef64cqe/1uZ8I56dSOsLwuy7r4eEViQ=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=
 github.com/stretchr/testify v1.12.1/go.mod h1:MDEgiDPPsNp5cuIrHPPCyornHKgEVbtFUmoNlxoYthg=
 go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
