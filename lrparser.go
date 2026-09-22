@@ -7,19 +7,32 @@ package lrparser
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
 
+	"github.com/phomola/gomisc/list"
 	"github.com/phomola/textkit"
 )
 
 // Rule is a context-free rule with a builder function.
 type Rule struct {
-	LHS  string
-	RHS  []string
-	Conv func([]any) any
+	LHS     string
+	RHS     []string
+	Conv    func([]any) any
+	rhsList list.List[string]
+}
+
+// NewRule creates a new rule.
+func NewRule(lhs string, rhs []string, conv func([]any) any) *Rule {
+	return &Rule{LHS: lhs, RHS: rhs, Conv: conv}
+}
+
+func (r *Rule) rhsAsList() list.List[string] {
+	if r.rhsList.IsEmpty() {
+		r.rhsList = list.FromSlice(r.RHS)
+	}
+	return r.rhsList
 }
 
 // String returns a string representation of the rule.
@@ -127,48 +140,81 @@ func BuildRule(def string, f func([]any) any) (*Rule, error) {
 // Item is an item of the parser.
 type Item struct {
 	LHS    string
-	RHS    []string
+	RHS    list.List[string]
 	DotPos int
 }
 
-func (it *Item) String() string {
-	var s strings.Builder
-	s.WriteString(it.LHS + " ->")
-	for i, el := range it.RHS {
-		s.WriteString(" ")
-		if it.DotPos == i {
-			s.WriteString("*")
+// Less compares the two items.
+func (it Item) Less(it2 Item) bool {
+	if it.LHS < it2.LHS {
+		return true
+	}
+	if it.LHS > it2.LHS {
+		return false
+	}
+	if it.DotPos < it2.DotPos {
+		return true
+	}
+	if it.DotPos > it2.DotPos {
+		return false
+	}
+	if it.RHS.Len() < it2.RHS.Len() {
+		return true
+	}
+	if it.RHS.Len() > it2.RHS.Len() {
+		return false
+	}
+	for i, x := range it.RHS.EnumIndexed() {
+		y := it2.RHS.At(i)
+		if x < y {
+			return true
 		}
-		s.WriteString(el)
+		if x > y {
+			return false
+		}
 	}
-	if it.DotPos == len(it.RHS) {
-		s.WriteString("*")
-	}
-	return s.String() + ";"
+	return false
 }
+
+// func (it *Item) String() string {
+// 	var s strings.Builder
+// 	s.WriteString(it.LHS + " ->")
+// 	for i, el := range it.RHS.EnumIndexed() {
+// 		s.WriteString(" ")
+// 		if it.DotPos == i {
+// 			s.WriteString("*")
+// 		}
+// 		s.WriteString(el)
+// 	}
+// 	if it.DotPos == it.RHS.Len() {
+// 		s.WriteString("*")
+// 	}
+// 	return s.String() + ";"
+// }
 
 // State is a state of the parser.
 type State struct {
-	Items []*Item
+	Items list.List[Item]
 }
 
-func (st *State) String() string {
-	sort.Slice(st.Items, func(i, j int) bool { return st.Items[i].String() < st.Items[j].String() })
-	keys := make([]string, len(st.Items))
-	for i, it := range st.Items {
-		keys[i] = it.String()
-	}
-	return strings.Join(keys, " ")
-}
+// func (st *State) String() string {
+// 	// sort.Slice(st.Items, func(i, j int) bool { return st.Items[i].String() < st.Items[j].String() })
+// 	keys := make([]string, st.Items.Len())
+// 	for i, it := range st.Items.EnumIndexed() {
+// 		keys[i] = it.String()
+// 	}
+// 	return strings.Join(keys, " ")
+// }
 
 type tableKey struct {
-	row, column string
+	row    list.List[Item]
+	column string
 }
 
 type action any
 
 type shiftAction struct {
-	state string
+	state list.List[Item]
 }
 
 type reduceAction struct {
@@ -178,7 +224,7 @@ type reduceAction struct {
 type acceptAction struct{}
 
 type gotoAction struct {
-	state string
+	state list.List[Item]
 }
 
 // Located specifies methods for AST node location.
@@ -192,52 +238,53 @@ type Grammar struct {
 	// The rules of the grammar.
 	Rules             []*Rule
 	ErrorOnNonlocated bool
-	states            map[string]*State
-	initialState      string
-	actionTable       map[tableKey]action
-	gotoTable         map[tableKey]action
+	// states            map[list.List[Item]]*State
+	initialState list.List[Item]
+	actionTable  map[tableKey]action
+	gotoTable    map[tableKey]action
 }
 
 // BuildItems builds the items of the automaton.
 func (gr *Grammar) BuildItems() {
-	gr.states = make(map[string]*State)
+	statesMap := make(map[list.List[Item]]*State)
 	gr.actionTable = make(map[tableKey]action)
 	gr.gotoTable = make(map[tableKey]action)
 	rule := gr.Rules[0]
-	acceptingItem := &Item{rule.LHS, rule.RHS, len(rule.RHS)}
-	items := gr.closeItems([]*Item{&Item{rule.LHS, rule.RHS, 0}})
-	state := &State{items}
-	gr.initialState = state.String()
+	rhsList := rule.rhsAsList()
+	acceptingItem := Item{rule.LHS, rhsList, len(rule.RHS)}
+	items := gr.closeItems([]Item{{rule.LHS, rhsList, 0}})
+	state := &State{list.FromSlice(items).Sorted(Item.Less)}
+	gr.initialState = state.Items
 	states := []*State{state}
 	for len(states) > 0 {
 		state := states[0]
 		states = states[1:]
-		if _, ok := gr.states[state.String()]; !ok {
-			gr.states[state.String()] = state
+		if _, ok := statesMap[state.Items]; !ok {
+			statesMap[state.Items] = state
 			tr := make(map[string]struct{})
-			for _, it := range state.Items {
-				if it.DotPos < len(it.RHS) {
-					tr[it.RHS[it.DotPos]] = struct{}{}
+			for it := range state.Items.Enum() {
+				if it.DotPos < it.RHS.Len() {
+					tr[it.RHS.At(it.DotPos)] = struct{}{}
 				}
 			}
 			for symb := range tr {
-				var items []*Item
-				for _, it := range state.Items {
-					if it.DotPos < len(it.RHS) && it.RHS[it.DotPos] == symb {
-						items = append(items, &Item{it.LHS, it.RHS, it.DotPos + 1})
+				var items []Item
+				for it := range state.Items.Enum() {
+					if it.DotPos < it.RHS.Len() && it.RHS.At(it.DotPos) == symb {
+						items = append(items, Item{it.LHS, it.RHS, it.DotPos + 1})
 					}
 				}
 				items = gr.closeItems(items)
-				state2 := &State{items}
+				state2 := &State{list.FromSlice(items).Sorted(Item.Less)}
 				if symb[0] == '_' || symb[0] == '&' {
-					gr.actionTable[tableKey{state.String(), symb}] = &shiftAction{state2.String()}
+					gr.actionTable[tableKey{state.Items, symb}] = &shiftAction{state2.Items}
 				} else {
-					gr.gotoTable[tableKey{state.String(), symb}] = &gotoAction{state2.String()}
+					gr.gotoTable[tableKey{state.Items, symb}] = &gotoAction{state2.Items}
 				}
-				if _, ok := gr.states[state2.String()]; !ok {
+				if _, ok := statesMap[state2.Items]; !ok {
 					for _, it := range items {
-						if it.String() == acceptingItem.String() {
-							gr.actionTable[tableKey{state2.String(), "_EOF"}] = &acceptAction{}
+						if it == acceptingItem {
+							gr.actionTable[tableKey{state2.Items, "_EOF"}] = &acceptAction{}
 						}
 					}
 					states = append(states, state2)
@@ -249,19 +296,19 @@ func (gr *Grammar) BuildItems() {
 	for key := range gr.actionTable {
 		terminals[key.column] = struct{}{}
 	}
-	for _, state := range gr.states {
+	for _, state := range statesMap {
 		for i, rule := range gr.Rules {
 			if i > 0 {
-				it := &Item{rule.LHS, rule.RHS, len(rule.RHS)}
-				for _, it2 := range state.Items {
-					if it.String() == it2.String() {
+				it := Item{rule.LHS, rule.rhsAsList(), len(rule.RHS)}
+				for it2 := range state.Items.Enum() {
+					if it == it2 {
 						for terminal := range terminals {
-							if prevAction, ok := gr.actionTable[tableKey{state.String(), terminal}]; ok {
+							if prevAction, ok := gr.actionTable[tableKey{state.Items, terminal}]; ok {
 								if _, ok := prevAction.(*shiftAction); !ok {
 									panic(fmt.Sprintf("conflict: %s %T %s", terminal, prevAction, prevAction))
 								}
 							} else {
-								gr.actionTable[tableKey{state.String(), terminal}] = &reduceAction{i}
+								gr.actionTable[tableKey{state.Items, terminal}] = &reduceAction{i}
 							}
 						}
 					}
@@ -272,28 +319,28 @@ func (gr *Grammar) BuildItems() {
 	//fmt.Println("# states:", len(gr.states))
 }
 
-func (gr *Grammar) closeItems(items []*Item) []*Item {
-	m := make(map[string]*Item, len(items))
+func (gr *Grammar) closeItems(items []Item) []Item {
+	m := make(map[Item]struct{}, len(items))
 	for _, it := range items {
-		m[it.String()] = it
+		m[it] = struct{}{}
 	}
 	for len(items) > 0 {
 		it := items[0]
 		items = items[1:]
-		if it.DotPos < len(it.RHS) {
-			symb := it.RHS[it.DotPos]
+		if it.DotPos < it.RHS.Len() {
+			symb := it.RHS.At(it.DotPos)
 			for _, rule := range gr.Rules {
 				if rule.LHS == symb {
-					it2 := &Item{rule.LHS, rule.RHS, 0}
-					if _, ok := m[it2.String()]; !ok {
-						m[it2.String()] = it2
+					it2 := Item{rule.LHS, rule.rhsAsList(), 0}
+					if _, ok := m[it2]; !ok {
+						m[it2] = struct{}{}
 						items = append(items, it2)
 					}
 				}
 			}
 		}
 	}
-	for _, it := range m {
+	for it := range m {
 		items = append(items, it)
 	}
 	return items
@@ -311,7 +358,7 @@ func (gr *Grammar) Parse(tokens []*textkit.Token) (any, error) {
 			keywords[key.column[1:]] = struct{}{}
 		}
 	}
-	stateStack := []string{gr.initialState}
+	stateStack := []list.List[Item]{gr.initialState}
 	resultStack := []any{}
 	for {
 		token := tokens[0]
