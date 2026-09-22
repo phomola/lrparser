@@ -1,5 +1,5 @@
-github.com/fealsamh/go-utils v0.2.0 h1:rAFBRDsYZH4Zq5rPW+QNLUtBA4P1Y7X0NRADMlWeQcM=
-github.com/fealsamh/go-utils v0.2.0/go.mod h1:Qn1p9iJWFucpU2cSwD6CNGv5y42EIcqqZIBMIGtzbMU=
+github.com/fealsamh/go-utils v0.2.1 h1:MspbDPOCeo77qvDXvnPpdsRgx10uARn1wEXS3bYTIno=
+github.com/fealsamh/go-utils v0.2.1/go.mod h1:Qn1p9iJWFucpU2cSwD6CNGv5y42EIcqqZIBMIGtzbMU=
 github.com/phomola/gomisc v0.1.16 h1:gAEEhRYTQyx0BdBJHdM5PrMTiW6PY7jwCIvy/MLgztA=
 github.com/phomola/gomisc v0.1.16/go.mod h1:FP7Z4/byxoYbe2QF9Vob2NuIfwYipmQA/sDnqsbNR40=
 github.com/phomola/textkit v0.1.11 h1:7ywXbFdHozs64LOH0uOX/4awWilMUvt5/wfI7Jx2Thk=
