@@ -14,3 +14,7 @@ require (
 )
 
 require github.com/phomola/textkit v0.1.10
+require (
+	github.com/fealsamh/go-utils v0.2.2 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
+)
