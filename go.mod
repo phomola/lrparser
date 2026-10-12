@@ -1,6 +1,6 @@
 module github.com/phomola/lrparser
 
-go 1.27
+go 1.27.2
 
 require (
 	github.com/phomola/gomisc v0.1.17
